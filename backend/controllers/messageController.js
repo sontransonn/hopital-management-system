@@ -17,7 +17,7 @@ export const sendMessage = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error in message controller", error.message);
+        console.log("Error in sendMessage controller", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
@@ -33,7 +33,7 @@ export const getAllMessages = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error in message controller", error.message);
+        console.log("Error in getAllMessages controller", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
 }

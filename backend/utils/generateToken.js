@@ -1,5 +1,9 @@
-export const generateToken = (user, res) => {
-    const token = user.generateJsonWebToken();
+import jwt from "jsonwebtoken";
+
+export const generateTokenAndSetCookie = (user, res) => {
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET_KEY, {
+        expiresIn: process.env.JWT_EXPIRE,
+    });
 
     const cookieName = user.role === 'Admin' ? 'adminToken' : 'patientToken';
 
