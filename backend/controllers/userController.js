@@ -1,5 +1,5 @@
 import USER from "../models/userModel.js";
-import cloudinary from "cloudinary";
+import cloudinary from "../configs/cloudinaryConfig.js";
 import bcrypt from "bcrypt"
 import { generateTokenAndSetCookie } from "../utils/generateToken.js";
 
@@ -195,6 +195,9 @@ export const addNewDoctor = async (req, res) => {
         return res.json("Failed To Upload Doctor Avatar To Cloudinary")
     }
 
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const doctor = new USER({
         firstName,
         lastName,
@@ -203,7 +206,7 @@ export const addNewDoctor = async (req, res) => {
         nic,
         dob,
         gender,
-        password,
+        password: hashedPassword,
         role: "Doctor",
         doctorDepartment,
         docAvatar: {

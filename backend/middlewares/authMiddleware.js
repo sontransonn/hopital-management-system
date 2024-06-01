@@ -28,8 +28,6 @@ export const isPatientAuthenticated = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-    console.log(decoded);
-
     req.user = await USER.findById(decoded.id);
 
     if (req.user.role !== "Patient") {

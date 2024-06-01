@@ -1,18 +1,18 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv"
 import cors from "cors";
 import fileUpload from "express-fileupload";
+
+import "./configs/dotenvConfig.js"
+import "./configs/cloudinaryConfig.js";
 
 import appointmentRoute from "./routes/appointmentRoute.js"
 import messageRoute from "./routes/messageRoute.js"
 import userRoute from "./routes/userRoute.js"
 
-import "./config/cloudinaryConfig.js";
 import connectToMongoDB from "./services/connectToMongoDB.js";
 
 const app = express();
-dotenv.config()
 
 const PORT = process.env.PORT || 8080
 
