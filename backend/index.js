@@ -1,10 +1,10 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import cors from "cors";
 import fileUpload from "express-fileupload";
 
 import "./configs/dotenvConfig.js"
 import "./configs/cloudinaryConfig.js";
+import corsConfig from "./configs/corsConfig.js"
 
 import appointmentRoute from "./routes/appointmentRoute.js"
 import messageRoute from "./routes/messageRoute.js"
@@ -16,10 +16,9 @@ const app = express();
 
 const PORT = process.env.PORT || 8080
 
-// middlewares
-app.use(cors());
-app.use(express.json());
+app.use(corsConfig);
 app.use(cookieParser());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload({
     useTempFiles: true,

@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import cookieConfig from "../configs/cookieConfig.js";
 
 export const generateTokenAndSetCookie = (user, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
@@ -7,12 +8,7 @@ export const generateTokenAndSetCookie = (user, res) => {
 
     const cookieName = user.role === 'Admin' ? 'adminToken' : 'patientToken';
 
-    res.cookie(cookieName, token, {
-        expires: new Date(
-            Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-        ),
-        httpOnly: true,
-    })
+    res.cookie(cookieName, token, cookieConfig)
 
     return token
 }

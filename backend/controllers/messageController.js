@@ -6,10 +6,18 @@ export const sendMessage = async (req, res) => {
         const { firstName, lastName, email, phone, message } = req.body;
 
         if (!firstName || !lastName || !email || !phone || !message) {
-            return res.status(500).json("Please Fill Full Form!");
+            return res.status(400).json({ message: "Please Fill Full Form!" });
         }
 
-        await MESSAGE.create({ firstName, lastName, email, phone, message });
+        const newMessage = new MESSAGE({
+            firstName,
+            lastName,
+            email,
+            phone,
+            message
+        })
+
+        await newMessage.save()
 
         res.status(200).json({
             success: true,

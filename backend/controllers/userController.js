@@ -17,13 +17,13 @@ export const patientRegister = async (req, res) => {
         } = req.body;
 
         if (!firstName || !lastName || !email || !phone || !nic || !dob || !gender || !password) {
-            return res.json("Please Fill Full Form!");
+            return res.status(400).json({ message: "Vui lòng điền đầy ffur thông tin!" });
         }
 
         const isRegistered = await USER.findOne({ email });
 
         if (isRegistered) {
-            return res.json("User already exist!");
+            return res.status(400).json({ message: "Email đã tồn tại!" });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -45,9 +45,9 @@ export const patientRegister = async (req, res) => {
 
         const token = generateTokenAndSetCookie(user, res)
 
-        res.json({
+        res.status(200).json({
             success: true,
-            message: "User Registered",
+            message: "Đăng ký thành công!",
             user,
             token,
         })
@@ -59,37 +59,42 @@ export const patientRegister = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
-        const { email, password, confirmPassword, role } = req.body;
+        const {
+            email,
+            password,
+            confirmPassword,
+            role
+        } = req.body;
 
         if (!email || !password || !confirmPassword || !role) {
-            return res.json("Please Fill Full Form!");
+            return res.status(400).json({ message: "Vui lòng điền đầy đủ thông tin!" });
         }
 
         if (password !== confirmPassword) {
-            return res.json("Password & Confirm Password Do Not Match!")
+            return res.status(400).json({ message: "Xác nhận mật khẩu không khớp!" })
         }
 
         const user = await USER.findOne({ email }).select("+password");
 
         if (!user) {
-            return res.json("Invalid Email Or Password!");
+            return res.status(400).json({ message: "Email hoặc mật khẩu không hợp lệ!" });
         }
 
         const isPasswordCorrect = bcrypt.compare(password, user.password);
 
         if (!isPasswordCorrect) {
-            return res.json("Invalid Email Or Password!");
+            return res.status(400).json({ message: "Email hoặc mật khẩu không hợp lệ!" });
         }
 
         if (role !== user.role) {
-            return res.json(`User Not Found With This Role!`);
+            return res.status(400).json({ message: `Không tìm thấy người dùng với vai trò này!` });
         }
 
         const token = generateTokenAndSetCookie(user, res)
 
-        res.json({
+        res.status(201).json({
             success: true,
-            message: "Login Successfully!",
+            message: "Đăng nhập thành công!",
             user,
             token,
         })
@@ -113,13 +118,13 @@ export const addNewAdmin = async (req, res) => {
         } = req.body;
 
         if (!firstName || !lastName || !email || !phone || !nic || !dob || !gender || !password) {
-            return res.json("Please Fill Full Form!");
+            return res.json({ message: "Vui lòng điền đầy đủ thông tin!" });
         }
 
         const isRegistered = await USER.findOne({ email });
 
         if (isRegistered) {
-            return res.json("Admin With This Email Already Exists!");
+            return res.json({ message: "Email đã tồn tại!" });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -141,7 +146,7 @@ export const addNewAdmin = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: "New Admin Registered",
+            message: "Admin mới đã được tạo thành công!",
             admin,
         });
     } catch (error) {
@@ -152,76 +157,82 @@ export const addNewAdmin = async (req, res) => {
 }
 
 export const addNewDoctor = async (req, res) => {
-    if (!req.files || Object.keys(req.files).length === 0) {
-        return res.json("Doctor Avatar Required!");
+    try {
+        if (!req.files || Object.keys(req.files).length === 0) {
+            return res.json({ message: "Cần có Avatar Bác sĩ!" });
+        }
+
+        const { docAvatar } = req.files;
+        const allowedFormats = ["image/png", "image/jpeg", "image/webp"];
+
+        if (!allowedFormats.includes(docAvatar.mimetype)) {
+            return res.json({ message: "Định dạng file không được hỗ trợ!" });
+        }
+
+        const {
+            firstName,
+            lastName,
+            email,
+            phone,
+            nic,
+            dob,
+            gender,
+            password,
+            doctorDepartment,
+        } = req.body;
+
+        if (!firstName || !lastName || !email || !phone || !nic || !dob || !gender || !password || !doctorDepartment || !docAvatar) {
+            return res.json({ message: "Vui lòng điền đầy đủ thông tin!" });
+        }
+
+        const isRegistered = await USER.findOne({ email });
+
+        if (isRegistered) {
+            return res.json({ message: "Email đã tồn tại!" })
+        }
+
+        const cloudinaryResponse = await cloudinary.uploader.upload(
+            docAvatar.tempFilePath
+        );
+
+        if (!cloudinaryResponse || cloudinaryResponse.error) {
+            console.error("Cloudinary Error:", cloudinaryResponse.error || "Unknown Cloudinary error");
+
+            return res.json({ message: "Không thể tải Avatar bác sĩ lên Cloudinary!" })
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const doctor = new USER({
+            firstName,
+            lastName,
+            email,
+            phone,
+            nic,
+            dob,
+            gender,
+            password: hashedPassword,
+            role: "Doctor",
+            doctorDepartment,
+            docAvatar: {
+                public_id: cloudinaryResponse.public_id,
+                url: cloudinaryResponse.secure_url,
+            },
+        })
+
+        await doctor.save()
+
+        res.status(200).json({
+            success: true,
+            message: "Bác sĩ mới đã được tạo!",
+            doctor,
+        });
+    } catch (error) {
+        console.log("Error in addNewDoctor controller", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 
-    const { docAvatar } = req.files;
-    const allowedFormats = ["image/png", "image/jpeg", "image/webp"];
-
-    if (!allowedFormats.includes(docAvatar.mimetype)) {
-        return res.json("File Format Not Supported!");
-    }
-
-    const {
-        firstName,
-        lastName,
-        email,
-        phone,
-        nic,
-        dob,
-        gender,
-        password,
-        doctorDepartment,
-    } = req.body;
-
-    if (!firstName || !lastName || !email || !phone || !nic || !dob || !gender || !password || !doctorDepartment || !docAvatar) {
-        return res.json("Please Fill Full Form!");
-    }
-
-    const isRegistered = await USER.findOne({ email });
-
-    if (isRegistered) {
-        return res.json("Doctor With This Email Already Exists!")
-    }
-
-    const cloudinaryResponse = await cloudinary.uploader.upload(
-        docAvatar.tempFilePath
-    );
-
-    if (!cloudinaryResponse || cloudinaryResponse.error) {
-        console.error("Cloudinary Error:", cloudinaryResponse.error || "Unknown Cloudinary error");
-
-        return res.json("Failed To Upload Doctor Avatar To Cloudinary")
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const doctor = new USER({
-        firstName,
-        lastName,
-        email,
-        phone,
-        nic,
-        dob,
-        gender,
-        password: hashedPassword,
-        role: "Doctor",
-        doctorDepartment,
-        docAvatar: {
-            public_id: cloudinaryResponse.public_id,
-            url: cloudinaryResponse.secure_url,
-        },
-    })
-
-    await doctor.save()
-
-    res.status(200).json({
-        success: true,
-        message: "New Doctor Registered",
-        doctor,
-    });
 }
 
 export const getAllDoctors = async (req, res) => {
@@ -255,12 +266,12 @@ export const logoutAdmin = async (req, res) => {
     try {
         res.cookie("adminToken", "", {
             httpOnly: true,
-            expires: new Date(Date.now()),
+            expires: new Date(0),
         })
 
         res.json({
             success: true,
-            message: "Admin Logged Out Successfully.",
+            message: "Đăng xuất thành công!",
         });
     } catch (error) {
         console.log("Error in logoutAdmin controller", error.message);
@@ -272,12 +283,12 @@ export const logoutPatient = async (req, res) => {
     try {
         res.cookie("patientToken", "", {
             httpOnly: true,
-            expires: new Date(Date.now()),
+            expires: new Date(0),
         })
 
         res.json({
             success: true,
-            message: "Patient Logged Out Successfully.",
+            message: "Đăng xuất thành công!",
         });
     } catch (error) {
         console.log("Error in logoutPatient controller", error.message);
