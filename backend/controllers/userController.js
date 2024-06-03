@@ -45,7 +45,7 @@ export const patientRegister = async (req, res) => {
 
         const token = generateTokenAndSetCookie(user, res)
 
-        res.status(200).json({
+        res.status(201).json({
             success: true,
             message: "Đăng ký thành công!",
             user,
@@ -87,7 +87,7 @@ export const login = async (req, res) => {
         }
 
         if (role !== user.role) {
-            return res.status(400).json({ message: `Không tìm thấy người dùng với vai trò này!` });
+            return res.status(404).json({ message: `Không tìm thấy người dùng với vai trò này!` });
         }
 
         const token = generateTokenAndSetCookie(user, res)
@@ -118,13 +118,13 @@ export const addNewAdmin = async (req, res) => {
         } = req.body;
 
         if (!firstName || !lastName || !email || !phone || !nic || !dob || !gender || !password) {
-            return res.json({ message: "Vui lòng điền đầy đủ thông tin!" });
+            return res.status(400).json({ message: "Vui lòng điền đầy đủ thông tin!" });
         }
 
         const isRegistered = await USER.findOne({ email });
 
         if (isRegistered) {
-            return res.json({ message: "Email đã tồn tại!" });
+            return res.status(400).json({ message: "Email đã tồn tại!" });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -159,14 +159,14 @@ export const addNewAdmin = async (req, res) => {
 export const addNewDoctor = async (req, res) => {
     try {
         if (!req.files || Object.keys(req.files).length === 0) {
-            return res.json({ message: "Cần có Avatar Bác sĩ!" });
+            return res.status(400).json({ message: "Cần có Avatar Bác sĩ!" });
         }
 
         const { docAvatar } = req.files;
         const allowedFormats = ["image/png", "image/jpeg", "image/webp"];
 
         if (!allowedFormats.includes(docAvatar.mimetype)) {
-            return res.json({ message: "Định dạng file không được hỗ trợ!" });
+            return res.status(400).json({ message: "Định dạng file không được hỗ trợ!" });
         }
 
         const {
@@ -182,13 +182,13 @@ export const addNewDoctor = async (req, res) => {
         } = req.body;
 
         if (!firstName || !lastName || !email || !phone || !nic || !dob || !gender || !password || !doctorDepartment || !docAvatar) {
-            return res.json({ message: "Vui lòng điền đầy đủ thông tin!" });
+            return res.status(400).json({ message: "Vui lòng điền đầy đủ thông tin!" });
         }
 
         const isRegistered = await USER.findOne({ email });
 
         if (isRegistered) {
-            return res.json({ message: "Email đã tồn tại!" })
+            return res.status(400).json({ message: "Email đã tồn tại!" })
         }
 
         const cloudinaryResponse = await cloudinary.uploader.upload(
@@ -198,7 +198,7 @@ export const addNewDoctor = async (req, res) => {
         if (!cloudinaryResponse || cloudinaryResponse.error) {
             console.error("Cloudinary Error:", cloudinaryResponse.error || "Unknown Cloudinary error");
 
-            return res.json({ message: "Không thể tải Avatar bác sĩ lên Cloudinary!" })
+            return res.status(500).json({ message: "Không thể tải Avatar bác sĩ lên Cloudinary!" })
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -232,7 +232,6 @@ export const addNewDoctor = async (req, res) => {
         console.log("Error in addNewDoctor controller", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
-
 }
 
 export const getAllDoctors = async (req, res) => {
@@ -269,7 +268,7 @@ export const logoutAdmin = async (req, res) => {
             expires: new Date(0),
         })
 
-        res.json({
+        res.status(201).json({
             success: true,
             message: "Đăng xuất thành công!",
         });
@@ -286,7 +285,7 @@ export const logoutPatient = async (req, res) => {
             expires: new Date(0),
         })
 
-        res.json({
+        res.status(201).json({
             success: true,
             message: "Đăng xuất thành công!",
         });

@@ -1,12 +1,17 @@
 import MESSAGE from "../models/messageModel.js";
 
 export const sendMessage = async (req, res) => {
-
     try {
-        const { firstName, lastName, email, phone, message } = req.body;
+        const {
+            firstName,
+            lastName,
+            email,
+            phone,
+            message
+        } = req.body;
 
         if (!firstName || !lastName || !email || !phone || !message) {
-            return res.status(400).json({ message: "Please Fill Full Form!" });
+            return res.status(400).json({ message: "Vui lòng điền đầy đủ thông tin!" });
         }
 
         const newMessage = new MESSAGE({
@@ -21,7 +26,7 @@ export const sendMessage = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: "Message Sent!",
+            message: "Tin nhắn đã được gửi!",
         });
 
     } catch (error) {

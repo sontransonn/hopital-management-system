@@ -32,7 +32,7 @@ export const isPatientAuthenticated = async (req, res, next) => {
         const token = req.cookies.patientToken;
 
         if (!token) {
-            return res.json({ message: "User is not authenticated!" })
+            return res.status(400).json({ message: "User is not authenticated!" })
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
@@ -40,7 +40,7 @@ export const isPatientAuthenticated = async (req, res, next) => {
         req.user = await USER.findById(decoded.id);
 
         if (req.user.role !== "Patient") {
-            return res.json(`${req.user.role} not authorized for this resource!`)
+            return res.status(403).json(`${req.user.role} not authorized for this resource!`)
         }
 
         next()
